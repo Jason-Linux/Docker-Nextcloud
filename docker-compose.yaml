@@ -1,0 +1,90 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:latest
+    restart: always
+    volumes:
+      - db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB_FILE=/run/secrets/postgres_db
+      - POSTGRES_USER_FILE=/run/secrets/postgres_user
+      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password
+    secrets:
+      - postgres_db
+      - postgres_user
+      - postgres_password
+    networks:
+      - lan
+      - web
+
+  app:
+    image: nextcloud:latest
+    restart: always
+    volumes:
+      - nextcloud:/var/www/html
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_DB_FILE=/run/secrets/postgres_db
+      - POSTGRES_USER_FILE=/run/secrets/postgres_user
+      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password
+      - NEXTCLOUD_ADMIN_PASSWORD_FILE=/run/secrets/nextcloud_admin_password
+      - NEXTCLOUD_ADMIN_USER_FILE=/run/secrets/nextcloud_admin_user
+    depends_on:
+      - db
+    networks:
+      - lan
+      - web
+    secrets:
+      - nextcloud_admin_password
+      - nextcloud_admin_user
+      - postgres_db
+      - postgres_user
+      - postgres_password
+    labels:
+      traefik.enable: true
+      traefik.docker.network: traefik_web
+      traefik.http.routers.nextcloud.entrypoints: websecure
+      traefik.http.routers.nextcloud.rule: 'Host(`${NEXTCLOUD_URL}`)'
+      traefik.http.services.nextcloud.loadbalancer.server.port: 80
+
+  reverse_proxy:
+    image: traefik:latest
+    restart: always
+    ports:
+      # The HTTP port
+      - "80:80"
+      # The HTTPS port
+      - "443:443"
+    volumes:
+      # So that Traefik can listen to the Docker events
+      - /var/run/docker.sock:/var/run/docker.sock
+      # traefik static configuration
+      - ./traefik.yaml:/etc/traefik/traefik.yaml:ro
+      # custom folder with dynamic configuration
+      - ./custom:/etc/traefik/custom:ro
+      # ssl volumes to store acme.json
+      - certs:/letsencrypt
+    networks:
+      - web
+
+volumes:
+  db:
+  nextcloud:
+
+networks:
+  web:
+    external: true
+
+
+secrets:
+  nextcloud_admin_password:
+    file: ./nextcloud_admin_password.txt # put admin password in this file
+  nextcloud_admin_user:
+    file: ./nextcloud_admin_user.txt # put admin username in this file
+  postgres_db:
+    file: ./postgres_db.txt # put postgresql db name in this file
+  postgres_password:
+    file: ./postgres_password.txt # put postgresql password in this file
+  postgres_user:
+    file: ./postgres_user.txt # put postgresql username in this file
