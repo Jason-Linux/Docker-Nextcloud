@@ -8,4 +8,4 @@ Solution in docker compose
 + Traeffic
 
 ToDoList :
-+ Paramétrer NEXTCLOUD URL
++ Modifier les versions de jitsi ne par mettre latest

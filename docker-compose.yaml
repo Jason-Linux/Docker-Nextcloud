@@ -111,6 +111,7 @@ services:
       traefik.http.routers.jitsi.entrypoints: websecure
       traefik.http.routers.jitsi.rule: 'Host(`jitsi.jdssandbox.local`)'
       traefik.http.services.jitsi.loadbalancer.server.port: 80
+
   # XMPP server
   prosody:
     image: jitsi/prosody
@@ -206,7 +207,7 @@ services:
 
     # Video bridge
   jvb:
-    image: jitsi/jvb
+    image: jitsi/jvb:jvb-2.3-20-gfc17337e-1
     restart: ${RESTART_POLICY}
     ports:
       - '${JVB_PORT}:${JVB_PORT}/udp'
