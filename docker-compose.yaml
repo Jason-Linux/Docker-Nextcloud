@@ -15,8 +15,7 @@ services:
       - postgres_user
       - postgres_password
     networks:
-      - lan
-      - web
+      - traefik_web
 
   app:
     image: nextcloud:latest
@@ -30,11 +29,11 @@ services:
       - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password
       - NEXTCLOUD_ADMIN_PASSWORD_FILE=/run/secrets/nextcloud_admin_password
       - NEXTCLOUD_ADMIN_USER_FILE=/run/secrets/nextcloud_admin_user
+      - NEXTCLOUD_URL
     depends_on:
       - db
     networks:
-      - lan
-      - web
+      - traefik_web
     secrets:
       - nextcloud_admin_password
       - nextcloud_admin_user
@@ -66,7 +65,8 @@ services:
       # ssl volumes to store acme.json
       - certs:/letsencrypt
     networks:
-      - web
+      - traefik_web
+      - meet.jitsi
   visio:
     image: jitsi/web
     restart: ${RESTART_POLICY}
@@ -109,7 +109,7 @@ services:
       traefik.enable: true
       traefik.docker.network: traefik_web
       traefik.http.routers.jitsi.entrypoints: websecure
-      traefik.http.routers.jitsi.rule: 'Host(`jitsi.mydomain.com`)'
+      traefik.http.routers.jitsi.rule: 'Host(`jitsi.jdssandbox.local`)'
       traefik.http.services.jitsi.loadbalancer.server.port: 80
   # XMPP server
   prosody:
@@ -201,6 +201,7 @@ services:
     depends_on:
       - prosody
     networks:
+      traefik_web:
       meet.jitsi:
 
     # Video bridge
@@ -230,6 +231,7 @@ services:
       - prosody
     networks:
       meet.jitsi:
+      traefik_web:
 
 
 volumes:
@@ -238,10 +240,10 @@ volumes:
   certs:
 
 networks:
-  web:
-    name: traefik_web
   meet.jitsi:
     name: jitsi_ntw
+  traefik_web:
+    name: web
 
 
 secrets:
