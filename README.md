@@ -6,3 +6,6 @@ Solution in docker compose
 + MariaDB
 + Onlyoffice
 + Traeffic
+
+ToDoList :
++ Paramétrer NEXTCLOUD URL
