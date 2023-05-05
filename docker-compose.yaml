@@ -67,7 +67,7 @@ services:
       - traefik_web
       - meet.jitsi
   visio:
-    image: jitsi/web
+    image: jitsi/web:web-1.0.7257-1
     restart: ${RESTART_POLICY}
     volumes:
       - ${CONFIG}/web:/config
@@ -113,7 +113,7 @@ services:
 
   # XMPP server
   prosody:
-    image: jitsi/prosody
+    image: jitsi/prosody:prosody-0.12.3
     restart: ${RESTART_POLICY}
     expose:
       - '5222'
@@ -177,8 +177,8 @@ services:
           - ${XMPP_SERVER}
 
     # Focus component
-  jicofo:
-    image: jitsi/jicofo
+  jicofo: 
+    image: jitsi/jicofo:jicofo-1.0-1030-1
     restart: ${RESTART_POLICY}
     volumes:
       - ${CONFIG}/jicofo:/config
