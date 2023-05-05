@@ -1,34 +1,30 @@
 #!/bin/sh
 # Simple script to generate secrets
-TO_GENERATE="database user password"
 
+# Variables
+
+DBName="NextcloudDB"
+
+# Fonctions
+
+# Password Generation
 generatePassword() {
     openssl rand -hex 64
 }
 
-echo "Initialize database access"
-echo "Do you want random access ? [Y/n]"
-read ANSWER
+# User Generation
+generateUser(){
+	openssl rand -hex 8
+}
 
+# User and Password Generation for DataBase
+echo $(generatePassword) > $(dirname "$0")/.secrets/postgres_password.txt
+echo $(generateUser) > $(dirname "$0")/.secrets/postgres_user.txt
 
-if [ -z $ANSWER ] || [ $ANSWER = 'Y' ]
-then
-	for VARIABLE in $TO_GENERATE ; do
-        	echo $(generatePassword) > $(dirname "$0")/.secrets/mysql-${VARIABLE}.txt
-	done
-	echo "Database secrets initialized whit random data"
-else 
-	echo "What is your database name ?"
-	read DATABASE
-	echo $DATABASE > $(dirname "$0")/.secrets/mysql-database.txt
-	echo "What is your database user ?"
-	read USER
-	echo $USER > $(dirname "$0")/.secrets/mysql-user.txt
-	echo "User password ?"
-	read PASSWORD
-	echo $PASSWORD > $(dirname "$0")/.secrets/mysql-password.txt
-	echo "Database secrets initialized whit your access"
-fi
+# Database name input in file
+echo $DBName > $(dirname "$0")/.secrets/postgres_db.txt
+
+# Secret generation for .env
 
 JICOFO_COMPONENT_SECRET=$(generatePassword)
 JICOFO_AUTH_PASSWORD=$(generatePassword)
@@ -36,6 +32,8 @@ JVB_AUTH_PASSWORD=$(generatePassword)
 JIGASI_XMPP_PASSWORD=$(generatePassword)
 JIBRI_RECORDER_PASSWORD=$(generatePassword)
 JIBRI_XMPP_PASSWORD=$(generatePassword)
+
+# Replacement values from previous setup variable
 
 sed -i.bak \
     -e "s#JICOFO_COMPONENT_SECRET=.*#JICOFO_COMPONENT_SECRET=${JICOFO_COMPONENT_SECRET}#g" \
