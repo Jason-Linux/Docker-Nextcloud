@@ -49,7 +49,7 @@ services:
       - "traefik.port=80"
       - "traefik.frontend.rule=Host:cloud.${DOMAINNAME}"
       - "traefik.frontend.headers.SSLHost=${DOMAINNAME}"
-      - "traefik.docker.network=web"
+      - "traefik.docker.network=traefik_web"
       - "traefik.frontend.headers.SSLRedirect=true"
       - "traefik.frontend.headers.browserXSSFilter=true"
       - "traefik.frontend.headers.contentTypeNosniff=true"
@@ -110,7 +110,7 @@ services:
       - "traefik.backend=portainer"
       - "traefik.frontend.rule=Host:portainer.${DOMAINNAME}"  
       - "traefik.port=9000"
-      - "traefik.docker.network=web"
+      - "traefik.docker.network=traefik_web"
       - "traefik.frontend.headers.SSLRedirect=true"
       - "traefik.frontend.headers.STSSeconds=315360000"
       - "traefik.frontend.headers.browserXSSFilter=true"
@@ -138,7 +138,7 @@ services:
       # ssl volumes to store acme.json
       - certs:/letsencrypt
     networks:
-      - web
+      - traefik_web
       - lan
     command:
       --api
@@ -148,7 +148,7 @@ services:
       - "traefik.port=8080"
       - "traefik.backend=traefik"
       - "traefik.frontend.rule=Host:traefik.${DOMAINNAME}"  
-      - "traefik.docker.network=web"
+      - "traefik.docker.network=traefik_web"
       - "traefik.frontend.headers.SSLRedirect=true"
       - "traefik.frontend.headers.STSSeconds=315360000"
       - "traefik.frontend.headers.browserXSSFilter=true"
