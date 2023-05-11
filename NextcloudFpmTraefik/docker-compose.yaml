@@ -74,7 +74,7 @@ services:
       # So that Traefik can listen to the Docker events
       - /var/run/docker.sock:/var/run/docker.sock
       # traefik static configuration
-      - ./traefik.yaml:/etc/traefik/traefik.yaml:ro
+      - ./custom/traefik.yaml:/etc/traefik/traefik.yaml:ro
       # custom folder with dynamic configuration
       - ./custom:/etc/traefik/custom:ro
       # ssl volumes to store acme.json
