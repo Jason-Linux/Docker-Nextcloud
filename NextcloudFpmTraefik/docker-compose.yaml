@@ -64,7 +64,7 @@ services:
 
   reverse_proxy:
     image: traefik:latest
-    restart: unless-stopped
+    restart: ${RESTART_POLICY}
     ports:
       # The HTTP port
       - "80:80"
