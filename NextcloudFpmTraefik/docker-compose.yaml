@@ -1,8 +1,8 @@
-version: '3.7'
+version: '3.9'
 
 services:
   db:
-    image: postgres
+    image: postgres:latest
     restart: ${RESTART_POLICY}
     volumes:
       - db:/var/lib/postgresql/data
@@ -86,7 +86,7 @@ services:
       - lan
 
   redis:
-    image: redis:alpine
+    image: redis:latest
     hostname: redis
     container_name: redis
     restart: ${RESTART_POLICY}
@@ -112,7 +112,7 @@ services:
       - "traefik.backend=portainer"
       - "traefik.frontend.rule=Host:portainer.${DOMAINNAME}"  
       - "traefik.port=9000"
-      - "traefik.docker.network=external"
+      - "traefik.docker.network=web"
       - "traefik.frontend.headers.SSLRedirect=true"
       - "traefik.frontend.headers.STSSeconds=315360000"
       - "traefik.frontend.headers.browserXSSFilter=true"
@@ -150,7 +150,7 @@ services:
       - "traefik.port=8080"
       - "traefik.backend=traefik"
       - "traefik.frontend.rule=Host:traefik.${DOMAINNAME}"  
-      - "traefik.docker.network=external"
+      - "traefik.docker.network=web"
       - "traefik.frontend.headers.SSLRedirect=true"
       - "traefik.frontend.headers.STSSeconds=315360000"
       - "traefik.frontend.headers.browserXSSFilter=true"
