@@ -100,7 +100,7 @@ services:
     command: -H unix:///var/run/docker.sock
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - portainer/data:/data
+      - ./portainer/data:/data
     environment:
       - TZ=${TZ}
     networks:
@@ -166,7 +166,6 @@ volumes:
   db:
   nextcloud:
   certs:
-  portainer:
 
 secrets:
   nextcloud_admin_password:
