@@ -1,0 +1,110 @@
+version: '3.7'
+
+services:
+  db:
+    image: postgres
+    restart: ${RESTART_POLICY}
+    volumes:
+      - db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB_FILE=/run/secrets/postgres_db
+      - POSTGRES_USER_FILE=/run/secrets/postgres_user
+      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password
+    secrets:
+      - postgres_db
+      - postgres_password
+      - postgres_user
+
+  app:
+    image: nextcloud:stable-fpm
+    restart: ${RESTART_POLICY}
+    links:
+      - db
+    ports:
+      - 8080:80
+    volumes:
+      - nextcloud:/var/www/html
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_DB_FILE=/run/secrets/postgres_db
+      - POSTGRES_USER_FILE=/run/secrets/postgres_user
+      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password
+      - NEXTCLOUD_ADMIN_PASSWORD_FILE=/run/secrets/nextcloud_admin_password
+      - NEXTCLOUD_ADMIN_USER_FILE=/run/secrets/nextcloud_admin_user
+      - NEXTCLOUD_TRUSTED_DOMAINS:${NEXTCLOUD_URL}
+    depends_on:
+      - db
+    secrets:
+      - nextcloud_admin_password
+      - nextcloud_admin_user
+      - postgres_db
+      - postgres_password
+      - postgres_user
+    labels:
+      traefik.enable: true
+      traefik.docker.network: traefik_web
+      traefik.http.routers.nextcloud.entrypoints: websecure
+      traefik.http.routers.nextcloud.rule: 'Host(`${NEXTCLOUD_URL}`)'
+      traefik.http.services.nextcloud.loadbalancer.server.port: 80
+    networks:
+      - lan
+
+  web:
+    image: nginx:latest
+    restart: ${RESTART_POLICY}
+    ports:
+      - 8080:80
+    links:
+      - app
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    volumes_from:
+      - app
+    networks:
+      - lan
+
+  reverse_proxy:
+    image: traefik:latest
+    restart: unless-stopped
+    ports:
+      # The HTTP port
+      - "80:80"
+      # The HTTPS port
+      - "443:443"
+    volumes:
+      # So that Traefik can listen to the Docker events
+      - /var/run/docker.sock:/var/run/docker.sock
+      # traefik static configuration
+      - ./traefik.yaml:/etc/traefik/traefik.yaml:ro
+      # custom folder with dynamic configuration
+      - ./custom:/etc/traefik/custom:ro
+      # ssl volumes to store acme.json
+      - certs:/letsencrypt
+    networks:
+      - traefik_web
+      - lan
+
+
+volumes:
+  db:
+  nextcloud:
+  cert:
+
+secrets:
+  nextcloud_admin_password:
+    file: ./secrets/nextcloud_admin_password.txt # put admin password in this file
+  nextcloud_admin_user:
+    file: ./secrets/nextcloud_admin_user.txt # put admin username in this file
+  postgres_db:
+    file: ./secrets/postgres_db.txt # put postgresql db name in this file
+  postgres_password:
+    file: ./secrets/postgres_password.txt # put postgresql password in this file
+  postgres_user:
+    file: ./secrets/postgres_user.txt # put postgresql username in this file
+
+networks:
+  traefik_web:
+    external: true
+    name: web
+
+  lan:
