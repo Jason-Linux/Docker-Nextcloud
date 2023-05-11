@@ -87,7 +87,7 @@ services:
 volumes:
   db:
   nextcloud:
-  cert:
+  certs:
 
 secrets:
   nextcloud_admin_password:
