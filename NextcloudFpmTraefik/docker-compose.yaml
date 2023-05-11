@@ -70,7 +70,7 @@ services:
     image: nginx:latest
     restart: ${RESTART_POLICY}
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./custom/nginx.conf:/etc/nginx/nginx.conf:ro
       - nextcloud:/var/www/html
     labels:
       - "traefik.enable=true"
