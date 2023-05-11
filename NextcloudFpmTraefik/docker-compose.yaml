@@ -166,6 +166,7 @@ volumes:
   db:
   nextcloud:
   certs:
+  portainer:
 
 secrets:
   nextcloud_admin_password:
