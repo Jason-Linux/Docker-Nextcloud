@@ -10,6 +10,7 @@ services:
       - POSTGRES_DB_FILE=/run/secrets/postgres_db
       - POSTGRES_USER_FILE=/run/secrets/postgres_user
       - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password
+      - TZ=${TZ}
     secrets:
       - postgres_db
       - postgres_password
@@ -20,8 +21,8 @@ services:
     restart: ${RESTART_POLICY}
     links:
       - db
-    ports:
-      - 8081:80
+      - web
+      - redis
     volumes:
       - nextcloud:/var/www/html
     environment:
@@ -32,8 +33,10 @@ services:
       - NEXTCLOUD_ADMIN_PASSWORD_FILE=/run/secrets/nextcloud_admin_password
       - NEXTCLOUD_ADMIN_USER_FILE=/run/secrets/nextcloud_admin_user
       - NEXTCLOUD_TRUSTED_DOMAINS:${NEXTCLOUD_URL}
+      - TZ=${TZ}
     depends_on:
       - db
+      - redis
     secrets:
       - nextcloud_admin_password
       - nextcloud_admin_user
@@ -41,26 +44,83 @@ services:
       - postgres_password
       - postgres_user
     labels:
-      traefik.enable: true
-      traefik.docker.network: traefik_web
-      traefik.http.routers.nextcloud.entrypoints: websecure
-      traefik.http.routers.nextcloud.rule: 'Host(`${NEXTCLOUD_URL}`)'
-      traefik.http.services.nextcloud.loadbalancer.server.port: 80
+      - "traefik.enable=true"
+      - "traefik.backend=nextcloud"
+      - "traefik.port=80"
+      - "traefik.frontend.rule=Host:cloud.${DOMAINNAME}"
+      - "traefik.frontend.headers.SSLHost=${DOMAINNAME}"
+      - "traefik.docker.network=external"
+      - "traefik.frontend.headers.SSLRedirect=true"
+      - "traefik.frontend.headers.browserXSSFilter=true"
+      - "traefik.frontend.headers.contentTypeNosniff=true"
+      - "traefik.frontend.headers.forceSTSHeader=true"
+      - "traefik.frontend.headers.STSSeconds=315360000"
+      - "traefik.frontend.headers.STSIncludeSubdomains=true"
+      - "traefik.frontend.headers.STSPreload=true"
+      - "traefik.frontend.headers.frameDeny=true"
+      - "traefik.frontend.redirect.permanent=true"
+      - "traefik.frontend.redirect.regex=https://(.*)/.well-known/(card|cal)dav"
+      - "traefik.frontend.redirect.replacement=https://$$1/remote.php/dav/"
+      - "traefik.frontend.headers.customFrameOptionsValue=allow-from https://cloud.${DOMAINNAME}"
+      - "traefik.frontend.passHostHeader=true"
     networks:
       - lan
 
   web:
     image: nginx:latest
     restart: ${RESTART_POLICY}
-    ports:
-      - 8080:80
     links:
       - app
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - nextcloud:/var/www/html
+    labels:
+      - "traefik.enable=true"
+      - "traefik.backend=nginx"
+      - "traefik.port=80"
+      - "traefik.frontend.rule=Host:${DOMAINNAME}"
+      - "traefik.docker.network=lan"
+    environment:
+      - TZ=${TZ}
     networks:
       - lan
+
+  redis:
+    image: redis:alpine
+    hostname: redis
+    container_name: redis
+    restart: ${RESTART_POLICY}
+    networks:
+      - lan
+    environment:
+      - TZ=${TZ}
+
+  portainer:
+    image: portainer/portainer
+    container_name: portainer
+    restart: ${RESTART_POLICY}
+    command: -H unix:///var/run/docker.sock
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${USERDIR}/docker/portainer/data:/data
+    environment:
+      - TZ=${TZ}
+    networks:
+      - lan
+    labels:
+      - "traefik.enable=true"
+      - "traefik.backend=portainer"
+      - "traefik.frontend.rule=Host:portainer.${DOMAINNAME}"  
+      - "traefik.port=9000"
+      - "traefik.docker.network=external"
+      - "traefik.frontend.headers.SSLRedirect=true"
+      - "traefik.frontend.headers.STSSeconds=315360000"
+      - "traefik.frontend.headers.browserXSSFilter=true"
+      - "traefik.frontend.headers.contentTypeNosniff=true"
+      - "traefik.frontend.headers.forceSTSHeader=true"
+      - "traefik.frontend.headers.SSLHost=${DOMAINNAME}"
+      - "traefik.frontend.headers.STSIncludeSubdomains=true"
+      - "traefik.frontend.headers.STSPreload=true"
 
   reverse_proxy:
     image: traefik:latest
@@ -80,8 +140,28 @@ services:
       # ssl volumes to store acme.json
       - certs:/letsencrypt
     networks:
-      - traefik_web
+      - web
       - lan
+    command:
+      --api
+      --docker
+    labels:
+      - "traefik.enable=true"
+      - "traefik.port=8080"
+      - "traefik.backend=traefik"
+      - "traefik.frontend.rule=Host:traefik.${DOMAINNAME}"  
+      - "traefik.docker.network=external"
+      - "traefik.frontend.headers.SSLRedirect=true"
+      - "traefik.frontend.headers.STSSeconds=315360000"
+      - "traefik.frontend.headers.browserXSSFilter=true"
+      - "traefik.frontend.headers.contentTypeNosniff=true"
+      - "traefik.frontend.headers.forceSTSHeader=true"
+      - "traefik.frontend.headers.SSLHost=${DOMAINNAME}"
+      - "traefik.frontend.headers.STSIncludeSubdomains=true"
+      - "traefik.frontend.headers.STSPreload=true"
+      - "traefik.frontend.headers.frameDeny=true"
+    environment:
+      - TZ=${TZ}
 
 
 volumes:
@@ -107,3 +187,4 @@ networks:
     name: web
 
   lan:
+    driver: bridge
