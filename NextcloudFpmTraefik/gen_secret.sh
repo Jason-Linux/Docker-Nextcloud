@@ -18,8 +18,9 @@ generateUser(){
 }
 
 # User and Password Generation for DataBase
-echo $(generatePassword) > $(dirname "$0")/.secrets/postgres_password.txt
-echo $(generateUser) > $(dirname "$0")/.secrets/postgres_user.txt
+echo $(generateUser) > $(dirname "$0")/secrets/postgres_user.txt
+echo $(generatePassword) > $(dirname "$0")/secrets/postgres_password.txt
+echo $(generatePassword) > $(dirname "$0")/secrets/nextcloud_admin_password.txt
 
 # Database name input in file
-echo $DBName > $(dirname "$0")/.secrets/postgres_db.txt
+echo $DBName > $(dirname "$0")/secrets/postgres_db.txt
