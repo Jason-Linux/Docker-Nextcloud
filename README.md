@@ -6,6 +6,8 @@ Solution in docker compose
 + MariaDB
 + Onlyoffice
 + Traeffic
++ Adguard
++ Vault-Warden
 
 ToDoList :
 + Modifier les versions de jitsi ne par mettre latest
