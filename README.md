@@ -12,6 +12,7 @@ Solution in docker compose
 + Portainer
 + Graylog
 + Solution de backup
++ GLPI
   
 
 ToDoList :
