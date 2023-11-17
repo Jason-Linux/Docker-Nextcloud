@@ -8,6 +8,9 @@ Solution in docker compose
 + Traeffic
 + Adguard
 + Vault-Warden
++ Gitea
++ Portainer
+  
 
 ToDoList :
 + Modifier les versions de jitsi ne par mettre latest
