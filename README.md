@@ -10,6 +10,8 @@ Solution in docker compose
 + Vault-Warden
 + Gitea
 + Portainer
++ Graylog
++ Solution de backup
   
 
 ToDoList :
