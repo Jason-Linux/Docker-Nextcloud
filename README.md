@@ -1,18 +1,24 @@
-# Docker-Nextcloud
-Full Nextcloud Install
+# RadNetwork Project
+Full on prem solutions in different container
 
 Solution in docker compose
 + Nextcloud
 + MariaDB
 + Onlyoffice
 + Traeffic
++ LEMONLDAP
++ Jisti
 + Adguard
 + Vault-Warden
-+ Gitea
++ Gitea / Gitlab
 + Portainer
 + Graylog
 + Solution de backup
 + GLPI
++ VSCODIUM
++ TS3 server
++ Hashicorp/Vault
++ Wireguard
   
 
 ToDoList :

@@ -1,0 +1,90 @@
+version: "3.9"
+services:
+  db:
+    image: mariadb:latest
+    restart: always
+    volumes:
+      - db:/var/lib/mariadb/data
+    environment:
+      - MARIADB_DB_FILE=/run/secrets/mariadb_db
+      - MARIADB_USER_FILE=/run/secrets/mariadb_user
+      - MARIADB_PASSWORD_FILE=/run/secrets/mariadb_password
+    secrets:
+      - mariadb_db
+      - mariadb_user
+      - mariadb_password
+    networks:
+      - traefik_web
+
+  app:
+    image: nextcloud:latest
+    restart: always
+    volumes:
+      - nextcloud:/var/www/html
+    environment:
+      - MARIADB_HOST=db
+      - MARIADB_DB_FILE=/run/secrets/mariadb_db
+      - MARIADB_USER_FILE=/run/secrets/mariadb_user
+      - MARIADB_PASSWORD_FILE=/run/secrets/mariadb_password
+      - NEXTCLOUD_ADMIN_PASSWORD_FILE=/run/secrets/nextcloud_admin_password
+      - NEXTCLOUD_ADMIN_USER_FILE=/run/secrets/nextcloud_admin_user
+      - NEXTCLOUD_URL
+    depends_on:
+      - db
+    networks:
+      - traefik_web
+    secrets:
+      - nextcloud_admin_password
+      - nextcloud_admin_user
+      - mariadb_db
+      - mariadb_user
+      - mariadb_password
+    labels:
+      traefik.enable: true
+      traefik.docker.network: traefik_web
+      traefik.http.routers.nextcloud.entrypoints: websecure
+      traefik.http.routers.nextcloud.rule: 'Host(`${NEXTCLOUD_URL}`)'
+      traefik.http.services.nextcloud.loadbalancer.server.port: 80
+
+  reverse_proxy:
+    image: traefik:latest
+    restart: always
+    ports:
+      # The HTTP port
+      - "80:80"
+      # The HTTPS port
+      - "443:443"
+    volumes:
+      # So that Traefik can listen to the Docker events
+      - /var/run/docker.sock:/var/run/docker.sock
+      # traefik static configuration
+      - ./traefik.yaml:/etc/traefik/traefik.yaml:ro
+      # custom folder with dynamic configuration
+      - ./custom:/etc/traefik/custom:ro
+      # ssl volumes to store acme.json
+      - certs:/letsencrypt
+    networks:
+      - traefik_web
+      - meet.jitsi
+
+volumes:
+  db:
+  nextcloud:
+  certs:
+
+networks:
+  traefik_web:
+    name: web
+
+
+secrets:
+  nextcloud_admin_password:
+    file: ./nextcloud_admin_password.txt # put admin password in this file
+  nextcloud_admin_user:
+    file: ./nextcloud_admin_user.txt # put admin username in this file
+  mariadb_db:
+    file: ./mariadb_db.txt # put mariadbql db name in this file
+  mariadb_password:
+    file: ./mariadb_password.txt # put mariadbql password in this file
+  mariadb_user:
+    file: ./mariadb_user.txt # put mariadbql username in this file
